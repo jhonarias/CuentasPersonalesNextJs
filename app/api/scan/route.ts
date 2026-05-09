@@ -70,7 +70,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScanReceiptRe
         merchant: extraction.merchant,
         isAiScanned: true,
         confidence: extraction.confidence,
-        rawOcrData: extraction as Record<string, unknown>,
+        rawOcrData: JSON.parse(JSON.stringify(extraction)),
         categoryId,
         receipt: {
           create: {
