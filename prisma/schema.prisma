@@ -1,0 +1,70 @@
+// prisma/schema.prisma
+// Base de datos: PostgreSQL via Supabase
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  icon      String    // nombre de icono Tabler, ej: "ti-shopping-cart"
+  color     String    // hex color para UI, ej: "#1D9E75"
+  budget    Float?    // presupuesto mensual opcional
+  createdAt DateTime  @default(now())
+  expenses  Expense[]
+
+  @@map("categories")
+}
+
+model Expense {
+  id          String    @id @default(cuid())
+  amount      Float
+  description String
+  date        DateTime
+  merchant    String?   // comercio extraído por IA
+  notes       String?
+  isAiScanned Boolean   @default(false)
+  confidence  Float?    // confianza de extracción IA (0-1)
+  rawOcrData  Json?     // respuesta cruda de GPT-4o guardada para auditoría
+
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
+
+  receipt     Receipt?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("expenses")
+}
+
+model Receipt {
+  id          String   @id @default(cuid())
+  storageUrl  String   // URL en Supabase Storage
+  fileName    String
+  mimeType    String
+  sizeBytes   Int
+  processedAt DateTime @default(now())
+
+  expenseId   String   @unique
+  expense     Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+
+  @@map("receipts")
+}
+
+model MonthlyBudget {
+  id        String   @id @default(cuid())
+  year      Int
+  month     Int      // 1-12
+  amount    Float
+  createdAt DateTime @default(now())
+
+  @@unique([year, month])
+  @@map("monthly_budgets")
+}
