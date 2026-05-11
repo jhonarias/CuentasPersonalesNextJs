@@ -137,7 +137,7 @@ export default function ExpenseActions({ expense, onUpdate, onDelete }: ExpenseA
                   <p className="text-3xl font-bold text-gray-900 dark:text-white">
                     {formatCurrency(expense.amount)}
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{formatDate(expense.date)}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{formatDate(typeof expense.date === 'string' ? expense.date : expense.date.toISOString())}</p>
                 </div>
 
                 <div className="space-y-3 mb-6">
