@@ -8,6 +8,7 @@ import { ExpenseWithCategory, CategorySummary, MonthlyReport } from '@/types'
 import ExpenseChart from '@/components/ExpenseChart'
 import CategoryPieChart from '@/components/CategoryPieChart'
 import ScanButton from '@/components/ScanButton'
+import ManualExpenseButton from '@/components/ManualExpenseButton'
 
 const CURRENT_MONTH = new Date().getMonth() + 1
 const CURRENT_YEAR = new Date().getFullYear()
@@ -73,6 +74,7 @@ export default function DashboardPage() {
                 </option>
               ))}
             </select>
+            <ManualExpenseButton onSuccess={fetchData} />
             <ScanButton onSuccess={fetchData} />
           </div>
         </div>
