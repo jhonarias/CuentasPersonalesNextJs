@@ -14,14 +14,14 @@ interface Expense {
   amount: number
   description: string
   merchant: string | null
-  date: string
+  date: string | Date
   notes: string | null
   isAiScanned: boolean
   confidence: number | null
   categoryId: string
   category: Category
   receipt?: { storageUrl: string; fileName: string } | null
-  createdAt: string
+  createdAt: string | Date
 }
 
 interface ExpenseActionsProps {
@@ -43,7 +43,7 @@ export default function ExpenseActions({ expense, onUpdate, onDelete }: ExpenseA
     amount: String(expense.amount),
     description: expense.description,
     merchant: expense.merchant ?? '',
-    date: expense.date.split('T')[0],
+    date: new Date(expense.date).toISOString().split('T')[0],
     categoryId: expense.categoryId,
     notes: expense.notes ?? '',
   })
