@@ -9,6 +9,7 @@ import ExpenseChart from '@/components/ExpenseChart'
 import CategoryPieChart from '@/components/CategoryPieChart'
 import ScanButton from '@/components/ScanButton'
 import ManualExpenseButton from '@/components/ManualExpenseButton'
+import ExpenseActions from '@/components/ExpenseActions'
 
 const CURRENT_MONTH = new Date().getMonth() + 1
 const CURRENT_YEAR = new Date().getFullYear()
@@ -156,6 +157,11 @@ export default function DashboardPage() {
                   <span className="text-sm font-semibold text-gray-900 dark:text-white flex-shrink-0">
                     -{formatCurrency(expense.amount)}
                   </span>
+                  <ExpenseActions
+                    expense={expense}
+                    onUpdate={fetchData}
+                    onDelete={fetchData}
+                  />
                 </li>
               ))}
             </ul>
