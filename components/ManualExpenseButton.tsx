@@ -80,9 +80,9 @@ export default function ManualExpenseButton({ onSuccess }: ManualExpenseButtonPr
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors"
+        className="flex items-center gap-1.5 text-xs sm:text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors"
       >
-        <span>✏️</span> Agregar manual
+        <span>✏️</span> <span className="hidden sm:inline">Agregar</span> manual
       </button>
 
       {open && (
