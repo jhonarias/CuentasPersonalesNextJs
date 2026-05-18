@@ -10,10 +10,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 export async function scanWithGemini(
   imageSource: { base64: string; mimeType: string } | { url: string }
 ): Promise<ExpenseAIExtraction> {
-  // gemini-1.5-flash tiene tier gratuito real (1500 req/día)
-  // Usamos apiVersion 'v1' porque v1beta ya no lo soporta
+  // gemini-1.5-flash: tier gratuito 1500 req/día
+  // systemInstruction no está disponible en v1, se incluye en el prompt
   const model = genAI.getGenerativeModel(
-    { model: 'gemini-1.5-flash', systemInstruction: SYSTEM_PROMPT },
+    { model: 'gemini-1.5-flash' },
     { apiVersion: 'v1' }
   )
 
@@ -35,7 +35,10 @@ export async function scanWithGemini(
     }
   }
 
-  const result = await model.generateContent([USER_PROMPT, imagePart])
+  // Combinar system prompt + user prompt en un solo mensaje
+  const fullPrompt = `${SYSTEM_PROMPT}\n\n${USER_PROMPT}`
+
+  const result = await model.generateContent([fullPrompt, imagePart])
   const rawContent = result.response.text()
 
   if (!rawContent) throw new Error('Gemini no devolvió respuesta')
