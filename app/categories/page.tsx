@@ -28,7 +28,7 @@ const PRESET_COLORS = [
   '#1D9E75', '#3B82F6', '#8B5CF6', '#EF4444',
   '#F59E0B', '#EC4899', '#06B6D4', '#6B7280',
   '#10B981', '#F97316', '#84CC16', '#A855F7',
-]
+].map((c) => c.toUpperCase())
 
 type ModalMode = 'create' | 'edit' | 'confirm-delete' | null
 
@@ -66,7 +66,14 @@ export default function CategoriesPage() {
   }
 
   const openEdit = (cat: Category) => {
-    setForm({ name: cat.name, icon: cat.icon, color: cat.color, budget: cat.budget ? String(cat.budget) : '' })
+    setForm({
+      name: cat.name,
+      // Si el ícono es un nombre de clase heredado (ti-*), usar emoji genérico
+      icon: cat.icon.startsWith('ti-') ? '🏷️' : cat.icon,
+      color: cat.color.toUpperCase(),
+      // Usar != null para que el valor 0 también se muestre
+      budget: cat.budget != null ? String(cat.budget) : '',
+    })
     setSelected(cat)
     setError(null)
     setMode('edit')
@@ -272,11 +279,11 @@ export default function CategoriesPage() {
                     <button
                       key={c}
                       type="button"
-                      onClick={() => setForm((p) => ({ ...p, color: c }))}
+                      onClick={() => setForm((p) => ({ ...p, color: c.toUpperCase() }))}
                       className="w-7 h-7 rounded-full transition-transform hover:scale-110 flex items-center justify-center"
                       style={{ backgroundColor: c }}
                     >
-                      {form.color === c && <span className="text-white text-xs font-bold">✓</span>}
+                      {form.color.toUpperCase() === c.toUpperCase() && <span className="text-white text-xs font-bold">✓</span>}
                     </button>
                   ))}
                   {/* Color personalizado */}
