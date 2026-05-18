@@ -12,10 +12,7 @@ export async function scanWithGemini(
 ): Promise<ExpenseAIExtraction> {
   // gemini-1.5-flash: tier gratuito 1500 req/día
   // systemInstruction no está disponible en v1, se incluye en el prompt
-  const model = genAI.getGenerativeModel(
-    { model: 'gemini-1.5-flash' },
-    { apiVersion: 'v1' }
-  )
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' })
 
   let imagePart: { inlineData: { data: string; mimeType: string } } | { fileData: { mimeType: string; fileUri: string } }
 
