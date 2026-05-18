@@ -10,10 +10,12 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 export async function scanWithGemini(
   imageSource: { base64: string; mimeType: string } | { url: string }
 ): Promise<ExpenseAIExtraction> {
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-lite',
-    systemInstruction: SYSTEM_PROMPT,
-  })
+  // gemini-1.5-flash tiene tier gratuito real (1500 req/día)
+  // Usamos apiVersion 'v1' porque v1beta ya no lo soporta
+  const model = genAI.getGenerativeModel(
+    { model: 'gemini-1.5-flash', systemInstruction: SYSTEM_PROMPT },
+    { apiVersion: 'v1' }
+  )
 
   let imagePart: { inlineData: { data: string; mimeType: string } } | { fileData: { mimeType: string; fileUri: string } }
 
