@@ -12,13 +12,18 @@ export async function PUT(
   try {
     const { name, icon, color, budget } = await req.json()
 
-    if (!name || !icon || !color) {
-      return NextResponse.json({ error: 'name, icon y color son requeridos' }, { status: 400 })
+    if (!name || !color) {
+      return NextResponse.json({ error: 'name y color son requeridos' }, { status: 400 })
     }
 
     const category = await prisma.category.update({
       where: { id: params.id },
-      data: { name, icon, color, budget: budget ?? null },
+      data: {
+        name: name.trim(),
+        icon: icon?.trim() || '🏷️',
+        color,
+        budget: budget != null && budget !== '' ? Number(budget) : null,
+      },
     })
 
     return NextResponse.json({ data: category })
