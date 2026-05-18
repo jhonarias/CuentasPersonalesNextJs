@@ -3,6 +3,19 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
+// Si el ícono es un nombre de clase (ti-*), muestra un emoji genérico
+function IconDisplay({ icon, color }: { icon: string; color: string }) {
+  const isClassName = icon.startsWith('ti-')
+  return (
+    <div
+      className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+      style={{ backgroundColor: color + '22' }}
+    >
+      {isClassName ? '🏷️' : icon}
+    </div>
+  )
+}
+
 interface Category {
   id: string
   name: string
@@ -156,12 +169,7 @@ export default function CategoriesPage() {
                 className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 flex items-center gap-3"
               >
                 {/* Ícono */}
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                  style={{ backgroundColor: cat.color + '22' }}
-                >
-                  {cat.icon}
-                </div>
+                <IconDisplay icon={cat.icon} color={cat.color} />
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
