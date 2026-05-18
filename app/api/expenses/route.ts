@@ -1,6 +1,8 @@
 // app/api/expenses/route.ts
 // CRUD de gastos: listar y crear manualmente
 
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
 import { CreateExpenseInput, ApiResponse, ExpenseWithCategory } from '@/types'

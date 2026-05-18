@@ -1,6 +1,8 @@
 // app/api/categories/route.ts
 // Gestión de categorías con sus resúmenes mensuales
 
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
 import { calculateCategoryPercentages } from '@/lib/utils'
