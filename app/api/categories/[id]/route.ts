@@ -1,0 +1,55 @@
+// app/api/categories/[id]/route.ts
+// PUT y DELETE para una categoría específica
+
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/db/prisma'
+
+// PUT /api/categories/[id]
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { name, icon, color, budget } = await req.json()
+
+    if (!name || !icon || !color) {
+      return NextResponse.json({ error: 'name, icon y color son requeridos' }, { status: 400 })
+    }
+
+    const category = await prisma.category.update({
+      where: { id: params.id },
+      data: { name, icon, color, budget: budget ?? null },
+    })
+
+    return NextResponse.json({ data: category })
+  } catch (error) {
+    console.error('[PUT /api/categories/[id]]', error)
+    return NextResponse.json({ error: 'Error al actualizar categoría' }, { status: 500 })
+  }
+}
+
+// DELETE /api/categories/[id]
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    // Verificar si tiene gastos asociados
+    const expenseCount = await prisma.expense.count({
+      where: { categoryId: params.id },
+    })
+
+    if (expenseCount > 0) {
+      return NextResponse.json(
+        { error: `No se puede eliminar: tiene ${expenseCount} gasto(s) asociado(s)` },
+        { status: 409 }
+      )
+    }
+
+    await prisma.category.delete({ where: { id: params.id } })
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('[DELETE /api/categories/[id]]', error)
+    return NextResponse.json({ error: 'Error al eliminar categoría' }, { status: 500 })
+  }
+}

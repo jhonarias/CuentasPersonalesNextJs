@@ -2,6 +2,7 @@
 // app/dashboard/page.tsx
 
 import { useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { ExpenseWithCategory, CategorySummary } from '@/types'
 import ExpenseChart from '@/components/ExpenseChart'
@@ -79,6 +80,12 @@ export default function DashboardPage() {
                 </option>
               ))}
             </select>
+            <Link
+              href="/categories"
+              className="flex items-center gap-1.5 text-xs sm:text-sm border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors"
+            >
+              🏷️ <span className="hidden sm:inline">Categorías</span>
+            </Link>
             <ManualExpenseButton onSuccess={fetchData} />
             <ScanButton onSuccess={fetchData} />
           </div>
