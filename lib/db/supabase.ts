@@ -2,6 +2,7 @@
 // Cliente de Supabase — usado principalmente para Storage (imágenes de facturas)
 
 import { createClient } from '@supabase/supabase-js'
+import sharp from 'sharp'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -16,21 +17,56 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 export const RECEIPTS_BUCKET = 'receipts'
 
 /**
- * Sube una imagen de factura a Supabase Storage
+ * Comprime una imagen antes de subirla
+ * - Redimensiona a máx 1200px de ancho manteniendo proporción
+ * - Convierte a JPEG con calidad 80%
+ * - Típicamente reduce de 3-10MB a menos de 300KB
+ */
+async function compressImage(buffer: Buffer, mimeType: string): Promise<{ buffer: Buffer; mimeType: string }> {
+  // Los PDFs no se comprimen con sharp
+  if (mimeType === 'application/pdf') {
+    return { buffer, mimeType }
+  }
+
+  const compressed = await sharp(buffer)
+    .resize(1200, 1600, {
+      fit: 'inside',        // no estira, solo reduce si es más grande
+      withoutEnlargement: true,
+    })
+    .jpeg({ quality: 80, progressive: true })
+    .toBuffer()
+
+  return { buffer: compressed, mimeType: 'image/jpeg' }
+}
+
+/**
+ * Sube una imagen de factura a Supabase Storage con compresión automática
  * Retorna la URL pública del archivo
  */
 export async function uploadReceipt(
   file: File | Blob,
   fileName: string
-): Promise<{ url: string; path: string }> {
+): Promise<{ url: string; path: string; originalSize: number; compressedSize: number }> {
   const timestamp = Date.now()
-  const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_')
-  const path = `${timestamp}_${safeName}`
+  const originalSize = file.size
+
+  // Convertir File/Blob a Buffer para procesar con sharp
+  const arrayBuffer = await file.arrayBuffer()
+  const inputBuffer = Buffer.from(arrayBuffer)
+  const mimeType = file instanceof File ? file.type : 'image/jpeg'
+
+  // Comprimir imagen
+  const { buffer: compressedBuffer, mimeType: outputMimeType } = await compressImage(inputBuffer, mimeType)
+
+  // Nombre del archivo siempre .jpg después de comprimir (salvo PDF)
+  const ext = outputMimeType === 'application/pdf' ? 'pdf' : 'jpg'
+  const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/\.[^.]+$/, '')
+  const path = `${timestamp}_${safeName}.${ext}`
 
   const { error } = await supabaseAdmin.storage
     .from(RECEIPTS_BUCKET)
-    .upload(path, file, {
-      contentType: file instanceof File ? file.type : 'image/jpeg',
+    .upload(path, compressedBuffer, {
+      contentType: outputMimeType,
       upsert: false,
     })
 
@@ -40,5 +76,12 @@ export async function uploadReceipt(
     .from(RECEIPTS_BUCKET)
     .getPublicUrl(path)
 
-  return { url: urlData.publicUrl, path }
+  console.log(`[Storage] ${fileName}: ${(originalSize / 1024).toFixed(0)}KB → ${(compressedBuffer.length / 1024).toFixed(0)}KB`)
+
+  return {
+    url: urlData.publicUrl,
+    path,
+    originalSize,
+    compressedSize: compressedBuffer.length,
+  }
 }
