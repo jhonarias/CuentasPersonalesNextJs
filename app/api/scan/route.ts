@@ -1,10 +1,11 @@
 // app/api/scan/route.ts
-// Endpoint principal: recibe foto de factura → GPT-4o → guarda en DB
+// Endpoint principal: recibe foto de factura → AI → guarda en DB
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
 import { uploadReceipt } from '@/lib/db/supabase'
 import { scanReceiptWithAI } from '@/lib/ai/scanReceipt'
+import { getSessionUser } from '@/lib/auth/supabase-server'
 import { matchCategoryName } from '@/lib/utils'
 import { ScanReceiptResponse } from '@/types'
 
@@ -13,6 +14,11 @@ export const maxDuration = 30 // segundos (necesario para GPT-4o)
 
 export async function POST(req: NextRequest): Promise<NextResponse<ScanReceiptResponse>> {
   try {
+    const user = await getSessionUser()
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'No autenticado' }, { status: 401 })
+    }
+
     const formData = await req.formData()
     const file = formData.get('receipt') as File | null
 
@@ -38,25 +44,28 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScanReceiptRe
       )
     }
 
-    // 1. Convertir archivo a base64 para enviar a GPT-4o
+    // 1. Convertir a base64
     const arrayBuffer = await file.arrayBuffer()
     const base64 = Buffer.from(arrayBuffer).toString('base64')
     const mimeType = file.type === 'application/pdf' ? 'image/jpeg' : file.type
 
-    // 2. Llamar a GPT-4o Vision
+    // 2. Llamar al proveedor de IA configurado
     const extraction = await scanReceiptWithAI({ base64, mimeType })
 
     // 3. Subir imagen a Supabase Storage
     const { url: storageUrl } = await uploadReceipt(file, file.name || 'receipt.jpg')
 
-    // 4. Mapear categoría sugerida por IA a una categoría real en DB
-    const categories = await prisma.category.findMany({ select: { id: true, name: true } })
+    // 4. Mapear categoría sugerida a una categoría real del usuario
+    const categories = await prisma.category.findMany({
+      where: { userId: user.id },
+      select: { id: true, name: true },
+    })
     const categoryId =
       matchCategoryName(extraction.categoryGuess, categories) ?? categories[0]?.id
 
     if (!categoryId) {
       return NextResponse.json(
-        { success: false, error: 'No hay categorías configuradas en la base de datos' },
+        { success: false, error: 'No hay categorías configuradas. Crea al menos una categoría primero.' },
         { status: 500 }
       )
     }
@@ -72,6 +81,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScanReceiptRe
         confidence: extraction.confidence,
         rawOcrData: JSON.parse(JSON.stringify(extraction)),
         categoryId,
+        userId: user.id,
         receipt: {
           create: {
             storageUrl,

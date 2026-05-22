@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
+import { getSessionUser } from '@/lib/auth/supabase-server'
 import { CreateExpenseInput, ApiResponse, ExpenseWithCategory } from '@/types'
 import { z } from 'zod'
 
@@ -22,13 +23,16 @@ const CreateExpenseSchema = z.object({
 // GET /api/expenses?month=5&year=2026&categoryId=xxx
 export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse<ExpenseWithCategory[]>>> {
   try {
+    const user = await getSessionUser()
+    if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
     const { searchParams } = new URL(req.url)
     const month = searchParams.get('month')
     const year = searchParams.get('year')
     const categoryId = searchParams.get('categoryId')
     const limit = Number(searchParams.get('limit')) || 50
 
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = { userId: user.id }
 
     if (month && year) {
       const start = new Date(Number(year), Number(month) - 1, 1)
@@ -58,6 +62,9 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse<Ex
 // POST /api/expenses — crear gasto manualmente
 export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<ExpenseWithCategory>>> {
   try {
+    const user = await getSessionUser()
+    if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
     const body: CreateExpenseInput = await req.json()
     const validated = CreateExpenseSchema.safeParse(body)
 
@@ -81,6 +88,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse<E
         notes,
         isAiScanned: isAiScanned ?? false,
         confidence,
+        userId: user.id,
       },
       include: {
         category: { select: { id: true, name: true, icon: true, color: true } },

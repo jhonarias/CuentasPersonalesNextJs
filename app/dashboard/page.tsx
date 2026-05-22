@@ -10,6 +10,8 @@ import CategoryPieChart from '@/components/CategoryPieChart'
 import ScanButton from '@/components/ScanButton'
 import ManualExpenseButton from '@/components/ManualExpenseButton'
 import ExpenseActions from '@/components/ExpenseActions'
+import UserMenu from '@/components/UserMenu'
+import { createSupabaseBrowserClient } from '@/lib/auth/supabase-client'
 
 const CURRENT_MONTH = new Date().getMonth() + 1
 const CURRENT_YEAR = new Date().getFullYear()
@@ -25,6 +27,26 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [month, setMonth] = useState(CURRENT_MONTH)
   const [year, setYear] = useState(CURRENT_YEAR)
+  const [userInfo, setUserInfo] = useState<{ firstName: string; role: string } | null>(null)
+
+  // Cargar datos del usuario para el menú
+  useEffect(() => {
+    async function loadUser() {
+      const supabase = createSupabaseBrowserClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, role')
+          .eq('id', user.id)
+          .single()
+        if (profile) {
+          setUserInfo({ firstName: profile.first_name, role: profile.role })
+        }
+      }
+    }
+    loadUser()
+  }, [])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -88,6 +110,9 @@ export default function DashboardPage() {
             </Link>
             <ManualExpenseButton onSuccess={fetchData} />
             <ScanButton onSuccess={fetchData} />
+            {userInfo && (
+              <UserMenu firstName={userInfo.firstName} role={userInfo.role} />
+            )}
           </div>
         </div>
       </header>

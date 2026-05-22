@@ -1,8 +1,11 @@
 // app/api/expenses/[id]/route.ts
-// GET, PUT, DELETE para un gasto específico
+// GET, PUT, DELETE para un gasto específico (solo del usuario autenticado)
+
+export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
+import { getSessionUser } from '@/lib/auth/supabase-server'
 import { z } from 'zod'
 
 const UpdateExpenseSchema = z.object({
@@ -20,12 +23,12 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const user = await getSessionUser()
+    if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
     const expense = await prisma.expense.findUnique({
-      where: { id: params.id },
-      include: {
-        category: true,
-        receipt: true,
-      },
+      where: { id: params.id, userId: user.id },
+      include: { category: true, receipt: true },
     })
 
     if (!expense) {
@@ -45,6 +48,9 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const user = await getSessionUser()
+    if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
     const body = await req.json()
     const validated = UpdateExpenseSchema.safeParse(body)
 
@@ -58,7 +64,7 @@ export async function PUT(
     const { amount, description, date, merchant, categoryId, notes } = validated.data
 
     const expense = await prisma.expense.update({
-      where: { id: params.id },
+      where: { id: params.id, userId: user.id },
       data: {
         ...(amount !== undefined && { amount }),
         ...(description !== undefined && { description }),
@@ -86,7 +92,10 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await prisma.expense.delete({ where: { id: params.id } })
+    const user = await getSessionUser()
+    if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
+    await prisma.expense.delete({ where: { id: params.id, userId: user.id } })
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[DELETE /api/expenses/[id]]', error)

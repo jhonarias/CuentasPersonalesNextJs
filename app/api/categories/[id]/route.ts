@@ -1,8 +1,11 @@
 // app/api/categories/[id]/route.ts
-// PUT y DELETE para una categoría específica
+// PUT y DELETE para una categoría específica (solo del usuario autenticado)
+
+export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
+import { getSessionUser } from '@/lib/auth/supabase-server'
 
 // PUT /api/categories/[id]
 export async function PUT(
@@ -10,6 +13,9 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const user = await getSessionUser()
+    if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
     const { name, icon, color, budget } = await req.json()
 
     if (!name || !color) {
@@ -17,7 +23,7 @@ export async function PUT(
     }
 
     const category = await prisma.category.update({
-      where: { id: params.id },
+      where: { id: params.id, userId: user.id },
       data: {
         name: name.trim(),
         icon: icon?.trim() || '🏷️',
@@ -39,9 +45,11 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Verificar si tiene gastos asociados
+    const user = await getSessionUser()
+    if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+
     const expenseCount = await prisma.expense.count({
-      where: { categoryId: params.id },
+      where: { categoryId: params.id, userId: user.id },
     })
 
     if (expenseCount > 0) {
@@ -51,7 +59,7 @@ export async function DELETE(
       )
     }
 
-    await prisma.category.delete({ where: { id: params.id } })
+    await prisma.category.delete({ where: { id: params.id, userId: user.id } })
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[DELETE /api/categories/[id]]', error)

@@ -13,10 +13,11 @@ datasource db {
 
 model Category {
   id        String    @id @default(cuid())
-  name      String    @unique
-  icon      String    // nombre de icono Tabler, ej: "ti-shopping-cart"
+  name      String
+  icon      String    // emoji o icono, ej: "🛒"
   color     String    // hex color para UI, ej: "#1D9E75"
   budget    Float?    // presupuesto mensual opcional
+  userId    String?   // UUID del usuario propietario
   createdAt DateTime  @default(now())
   expenses  Expense[]
 
@@ -32,7 +33,8 @@ model Expense {
   notes       String?
   isAiScanned Boolean   @default(false)
   confidence  Float?    // confianza de extracción IA (0-1)
-  rawOcrData  Json?     // respuesta cruda de GPT-4o guardada para auditoría
+  rawOcrData  Json?     // respuesta cruda de la IA guardada para auditoría
+  userId      String?   // UUID del usuario propietario
 
   categoryId  String
   category    Category  @relation(fields: [categoryId], references: [id])
