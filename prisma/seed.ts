@@ -24,11 +24,12 @@ async function main() {
   console.log('🌱 Creando categorías por defecto...')
 
   for (const cat of DEFAULT_CATEGORIES) {
-    await prisma.category.upsert({
-      where: { name: cat.name },
-      update: {},
-      create: cat,
+    const existing = await prisma.category.findFirst({
+      where: { name: cat.name, userId: null },
     })
+    if (!existing) {
+      await prisma.category.create({ data: cat })
+    }
   }
 
   console.log(`✅ ${DEFAULT_CATEGORIES.length} categorías creadas`)
