@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
     await supabase.auth.admin.generateLink({
       type: 'signup',
       email,
+      password,
       options: {
         redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || ''}/login?info=registered`,
       },
