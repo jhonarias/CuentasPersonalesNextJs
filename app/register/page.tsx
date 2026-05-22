@@ -4,7 +4,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Turnstile } from '@marsidev/react-turnstile'
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -19,7 +19,7 @@ export default function RegisterPage() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const turnstileRef = useRef<{ reset: () => void }>(null)
+  const turnstileRef = useRef<TurnstileInstance>(null)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }))
