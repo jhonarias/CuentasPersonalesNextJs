@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/auth/supabase-server'
+import { createClient } from '@supabase/supabase-js'
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,7 +17,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
-    const { data: myProfile } = await supabase
+    // Usar service role para bypass RLS al leer perfiles
+    const adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { data: myProfile } = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -27,20 +34,14 @@ export async function GET(req: NextRequest) {
     }
 
     // Obtener todos los perfiles con sus emails de auth.users
-    const { data: profiles, error } = await supabase
+    const { data: profiles, error } = await adminClient
       .from('profiles')
       .select('id, first_name, last_name, phone, role, status, created_at, approved_at')
       .order('created_at', { ascending: false })
 
     if (error) throw error
 
-    // Obtener emails de Supabase Auth (servicio admin)
-    const { createClient } = await import('@supabase/supabase-js')
-    const adminClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-
+    // Obtener emails de Supabase Auth
     const { data: { users: authUsers } } = await adminClient.auth.admin.listUsers()
     const emailMap = Object.fromEntries(authUsers.map(u => [u.id, u.email || '']))
 

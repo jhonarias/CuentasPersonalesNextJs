@@ -2,6 +2,7 @@
 // Cliente Supabase para uso en Server Components y Route Handlers
 
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 export function createSupabaseServerClient() {
@@ -45,15 +46,26 @@ export async function getSessionUser() {
 }
 
 /**
+ * Cliente con service role para bypass de RLS en operaciones de servidor.
+ */
+export function createSupabaseAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
+
+/**
  * Obtiene el perfil del usuario actual (role, status, nombre).
+ * Usa service role para evitar problemas de RLS en el servidor.
  * Retorna null si no hay sesión o perfil.
  */
 export async function getSessionProfile() {
-  const supabase = createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getSessionUser()
   if (!user) return null
 
-  const { data: profile } = await supabase
+  const adminClient = createSupabaseAdminClient()
+  const { data: profile } = await adminClient
     .from('profiles')
     .select('id, first_name, last_name, phone, role, status')
     .eq('id', user.id)

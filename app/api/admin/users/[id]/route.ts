@@ -4,9 +4,8 @@
 export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/auth/supabase-server'
+import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/auth/supabase-server'
 import { sendApprovalEmail } from '@/lib/auth/resend'
-import { createClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 
 const UpdateSchema = z.object({
@@ -26,7 +25,10 @@ export async function PATCH(
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
-    const { data: myProfile } = await supabase
+    // Usar service role para bypass RLS
+    const adminClient = createSupabaseAdminClient()
+
+    const { data: myProfile } = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -51,7 +53,7 @@ export async function PATCH(
       updateData.approved_by = user.id
     }
 
-    const { data: updatedProfile, error } = await supabase
+    const { data: updatedProfile, error } = await adminClient
       .from('profiles')
       .update(updateData)
       .eq('id', params.id)
@@ -62,10 +64,6 @@ export async function PATCH(
 
     // Si se aprobó, enviar email al usuario
     if (status === 'active') {
-      const adminClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      )
       const { data: { user: targetUser } } = await adminClient.auth.admin.getUserById(params.id)
       if (targetUser?.email) {
         await sendApprovalEmail(targetUser.email, updatedProfile?.first_name || '')
