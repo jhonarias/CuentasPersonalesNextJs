@@ -2,6 +2,7 @@
 // Protege rutas según estado de autenticación y aprobación del perfil
 
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function middleware(req: NextRequest) {
@@ -44,7 +45,12 @@ export async function middleware(req: NextRequest) {
 
   // Si está autenticado, verificar estado del perfil
   if (user) {
-    const { data: profile } = await supabase
+    // Usar service role para leer el perfil y evitar problemas de RLS en el middleware
+    const adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+    const { data: profile } = await adminClient
       .from('profiles')
       .select('role, status')
       .eq('id', user.id)
