@@ -17,7 +17,7 @@ model Category {
   icon      String    // emoji o icono, ej: "🛒"
   color     String    // hex color para UI, ej: "#1D9E75"
   budget    Float?    // presupuesto mensual opcional
-  userId    String?   // UUID del usuario propietario
+  userId    String?   @map("user_id")  // UUID del usuario propietario
   createdAt DateTime  @default(now())
   expenses  Expense[]
 
@@ -34,7 +34,7 @@ model Expense {
   isAiScanned Boolean   @default(false)
   confidence  Float?    // confianza de extracción IA (0-1)
   rawOcrData  Json?     // respuesta cruda de la IA guardada para auditoría
-  userId      String?   // UUID del usuario propietario
+  userId      String?   @map("user_id")  // UUID del usuario propietario
 
   categoryId  String
   category    Category  @relation(fields: [categoryId], references: [id])
