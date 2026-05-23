@@ -74,7 +74,11 @@ export async function POST(req: NextRequest) {
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
-      email_confirm: false, // requiere verificación de email
+      // TODO: cuando se tenga dominio propio verificado en Resend, cambiar a email_confirm: false
+      // y descomentar el bloque de verificación de email más abajo.
+      // Actualmente se omite la verificación porque onboarding@resend.dev no puede
+      // enviar a emails externos. El admin aprueba manualmente como control de acceso.
+      email_confirm: true,
       user_metadata: {
         first_name: firstName,
         last_name: lastName,
@@ -90,15 +94,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: message }, { status: 400 })
     }
 
-    // Enviar email de verificación al usuario
-    await supabase.auth.admin.generateLink({
-      type: 'signup',
-      email,
-      password,
-      options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || ''}/login?info=registered`,
-      },
-    })
+    // TODO: descomentar cuando se tenga dominio propio verificado en Resend.
+    // Esto envía al usuario un link para verificar su email antes de que el admin lo apruebe.
+    // Pasos para activar:
+    //   1. Verificar dominio en Resend → Domains
+    //   2. Cambiar from en lib/auth/resend.ts a noreply@tudominio.com
+    //   3. Cambiar email_confirm a false arriba
+    //   4. Descomentar este bloque
+    //
+    // const { data: linkData } = await supabase.auth.admin.generateLink({
+    //   type: 'signup',
+    //   email,
+    //   password,
+    //   options: {
+    //     redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || ''}/login?info=registered`,
+    //   },
+    // })
+    // if (linkData?.properties?.action_link) {
+    //   await sendVerificationEmail(email, firstName, linkData.properties.action_link)
+    // }
 
     // Notificar al admin
     await sendNewUserNotification({
