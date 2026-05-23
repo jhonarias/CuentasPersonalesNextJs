@@ -23,7 +23,7 @@ export async function sendNewUserNotification(user: {
 
   try {
     await resend.emails.send({
-      from: 'GastosIA <noreply@gastosIA.app>',
+      from: 'GastosIA <onboarding@resend.dev>',
       to: ADMIN_EMAIL,
       subject: `Nuevo usuario pendiente de aprobación: ${user.firstName} ${user.lastName}`,
       html: `
@@ -70,7 +70,7 @@ export async function sendApprovalEmail(userEmail: string, firstName: string) {
 
   try {
     await resend.emails.send({
-      from: 'GastosIA <noreply@gastosIA.app>',
+      from: 'GastosIA <onboarding@resend.dev>',
       to: userEmail,
       subject: '¡Tu cuenta ha sido aprobada! — GastosIA',
       html: `
