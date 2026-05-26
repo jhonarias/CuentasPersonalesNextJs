@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { formatThousands, parseNumberInput } from '@/lib/utils'
 
 interface Category {
   id: string
@@ -40,7 +41,12 @@ export default function ManualExpenseButton({ onSuccess }: ManualExpenseButtonPr
   }, [open])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+    const { name, value } = e.target
+    if (name === 'amount') {
+      setForm((prev) => ({ ...prev, amount: parseNumberInput(value) }))
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -106,13 +112,12 @@ export default function ManualExpenseButton({ onSuccess }: ManualExpenseButtonPr
                 </label>
                 <input
                   name="amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
                   required
-                  value={form.amount}
+                  value={formatThousands(form.amount)}
                   onChange={handleChange}
-                  placeholder="0.00"
+                  placeholder="0"
                   className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>

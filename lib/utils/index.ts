@@ -105,3 +105,25 @@ export function matchCategoryName(
 export function cn(...classes: (string | false | null | undefined)[]): string {
   return classes.filter(Boolean).join(' ')
 }
+
+/**
+ * Formatea un string numérico con separadores de miles para inputs.
+ * Ej: "1500000" → "1,500,000" | "1500.50" → "1,500.50"
+ */
+export function formatThousands(raw: string): string {
+  if (!raw) return ''
+  const parts = raw.split('.')
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return parts.join('.')
+}
+
+/**
+ * Limpia el valor de un input numérico: elimina todo excepto dígitos y un punto decimal.
+ * Úsalo en el onChange antes de guardar en el estado.
+ * Ej: "1,500,000" → "1500000" | "1.500,50" → "1.50050"
+ */
+export function parseNumberInput(value: string): string {
+  const clean = value.replace(/[^0-9.]/g, '')
+  const parts = clean.split('.')
+  return parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : clean
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { formatThousands, parseNumberInput } from '@/lib/utils'
 
 // Si el ícono es un nombre de clase (ti-*), muestra un emoji genérico
 function IconDisplay({ icon, color }: { icon: string; color: string }) {
@@ -303,12 +304,11 @@ export default function CategoriesPage() {
                   Presupuesto mensual (opcional)
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={form.budget}
-                  onChange={(e) => setForm((p) => ({ ...p, budget: e.target.value }))}
-                  placeholder="0.00"
+                  type="text"
+                  inputMode="decimal"
+                  value={formatThousands(form.budget)}
+                  onChange={(e) => setForm((p) => ({ ...p, budget: parseNumberInput(e.target.value) }))}
+                  placeholder="0"
                   className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
