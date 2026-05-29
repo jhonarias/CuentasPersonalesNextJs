@@ -30,7 +30,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse<Ex
     const month = searchParams.get('month')
     const year = searchParams.get('year')
     const categoryId = searchParams.get('categoryId')
-    const limit = Number(searchParams.get('limit')) || 50
+    const limit = Number(searchParams.get('limit')) || 500
 
     const where: Record<string, unknown> = { userId: user.id }
 
