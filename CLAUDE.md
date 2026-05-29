@@ -204,7 +204,8 @@ La app es una PWA. Al limpiar caché del navegador (DevTools → Application →
 | `infinite recursion detected in policy for relation "profiles"` | Políticas RLS de admin consultaban `profiles` recursivamente | Usar función `is_admin()` con `SECURITY DEFINER` |
 | `The column expenses.userId does not exist` | Prisma no mapeaba camelCase a snake_case | Agregar `@map("user_id")` en schema.prisma |
 | Middleware redirige a `/pending` aunque el perfil es activo | RLS bloqueaba lectura del perfil con anon key | Usar service role key en middleware |
-| `ERR_FAILED` al recargar la página | Service Worker cacheando respuestas de error | Limpiar site data en DevTools |
+| `ERR_FAILED` al recargar la página | Service Worker cacheando respuestas de error | **Corregido en `public/sw.js` v2**: Network-first para HTML, Cache-first solo para `/_next/static/`. Usuarios con SW v1 lo limpian automáticamente al activarse v2. |
+| `Unique constraint failed on the fields: (name)` al crear categoría | Índice único `categories_name_key` en la DB no fue eliminado al quitar `@unique` del schema | `DROP INDEX IF EXISTS categories_name_key;` en Supabase SQL Editor |
 | `Database error creating new user` en Supabase UI | Trigger `handle_new_user` sin `SET search_path = public` | Recrear función con ese parámetro |
 | `useSearchParams() should be wrapped in a suspense boundary` | Next.js 14 requiere Suspense alrededor de useSearchParams | Separar componente y envolverlo en `<Suspense>` |
 
@@ -238,3 +239,5 @@ git push origin main
 - ✅ Aislamiento de datos por usuario
 - ✅ PWA (instalable, service worker)
 - ✅ Deploy en Vercel + Supabase
+- ✅ Búsqueda y paginación client-side en listado de gastos del dashboard
+- ✅ Formato de miles en inputs de monto y presupuesto (`formatThousands` / `parseNumberInput` en `lib/utils/index.ts`)
