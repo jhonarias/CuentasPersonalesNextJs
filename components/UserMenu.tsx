@@ -6,13 +6,15 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createSupabaseBrowserClient } from '@/lib/auth/supabase-client'
+import ManualExpenseButton from '@/components/ManualExpenseButton'
 
 type Props = {
   firstName: string
   role: string
+  onExpenseSuccess?: () => void
 }
 
-export default function UserMenu({ firstName, role }: Props) {
+export default function UserMenu({ firstName, role, onExpenseSuccess }: Props) {
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -57,15 +59,35 @@ export default function UserMenu({ firstName, role }: Props) {
             )}
           </div>
 
+          <Link
+            href="/categories"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition"
+          >
+            🏷️ Categorías
+          </Link>
+
+          <div onClick={() => setOpen(false)}>
+            <ManualExpenseButton
+              onSuccess={onExpenseSuccess ?? (() => {})}
+              menuMode
+            />
+          </div>
+
           {role === 'admin' && (
-            <Link
-              href="/admin/users"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition"
-            >
-              👥 Gestión de usuarios
-            </Link>
+            <>
+              <div className="border-t border-gray-800 my-1" />
+              <Link
+                href="/admin/users"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition"
+              >
+                👥 Gestión de usuarios
+              </Link>
+            </>
           )}
+
+          <div className="border-t border-gray-800 my-1" />
 
           <button
             onClick={handleLogout}

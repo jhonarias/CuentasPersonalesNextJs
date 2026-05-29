@@ -12,9 +12,10 @@ interface Category {
 
 interface ManualExpenseButtonProps {
   onSuccess: () => void
+  menuMode?: boolean  // true → se ve como ítem de menú en lugar de botón de header
 }
 
-export default function ManualExpenseButton({ onSuccess }: ManualExpenseButtonProps) {
+export default function ManualExpenseButton({ onSuccess, menuMode = false }: ManualExpenseButtonProps) {
   const [open, setOpen] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
@@ -84,12 +85,21 @@ export default function ManualExpenseButton({ onSuccess }: ManualExpenseButtonPr
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 text-xs sm:text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors"
-      >
-        <span>✏️</span> <span className="hidden sm:inline">Agregar</span> manual
-      </button>
+      {menuMode ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition"
+        >
+          ✏️ Agregar manual
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-1.5 text-xs sm:text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors"
+        >
+          <span>✏️</span> <span className="hidden sm:inline">Agregar</span> manual
+        </button>
+      )}
 
       {open && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

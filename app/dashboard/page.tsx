@@ -8,7 +8,6 @@ import { ExpenseWithCategory, CategorySummary } from '@/types'
 import ExpenseChart from '@/components/ExpenseChart'
 import CategoryPieChart from '@/components/CategoryPieChart'
 import ScanButton from '@/components/ScanButton'
-import ManualExpenseButton from '@/components/ManualExpenseButton'
 import ExpenseActions from '@/components/ExpenseActions'
 import UserMenu from '@/components/UserMenu'
 import { createSupabaseBrowserClient } from '@/lib/auth/supabase-client'
@@ -136,16 +135,13 @@ export default function DashboardPage() {
                 </option>
               ))}
             </select>
-            <Link
-              href="/categories"
-              className="flex items-center gap-1.5 text-xs sm:text-sm border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors"
-            >
-              🏷️ <span className="hidden sm:inline">Categorías</span>
-            </Link>
-            <ManualExpenseButton onSuccess={fetchData} />
             <ScanButton onSuccess={fetchData} />
             {userInfo && (
-              <UserMenu firstName={userInfo.firstName} role={userInfo.role} />
+              <UserMenu
+                firstName={userInfo.firstName}
+                role={userInfo.role}
+                onExpenseSuccess={fetchData}
+              />
             )}
           </div>
         </div>
