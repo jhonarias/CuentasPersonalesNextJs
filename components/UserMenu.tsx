@@ -70,7 +70,6 @@ export default function UserMenu({ firstName, role, onExpenseSuccess }: Props) {
           <div onClick={() => setOpen(false)}>
             <ManualExpenseButton
               onSuccess={onExpenseSuccess ?? (() => {})}
-              menuMode
             />
           </div>
 
