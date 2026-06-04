@@ -108,7 +108,7 @@ handle_new_user() — AFTER INSERT ON auth.users
 │   ├── categories/page.tsx           # CRUD de categorías
 │   ├── admin/users/page.tsx          # Panel admin de usuarios
 │   └── api/
-│       ├── expenses/                 # GET (list) / POST (crear)
+│       ├── expenses/                 # GET (list: month,year,limit,orderBy) / POST (crear)
 │       ├── expenses/[id]/            # GET / PUT / DELETE
 │       ├── categories/               # GET con resumen mensual / POST
 │       ├── categories/list/          # GET lista simple (para selects)
@@ -241,3 +241,5 @@ git push origin main
 - ✅ Deploy en Vercel + Supabase
 - ✅ Búsqueda y paginación client-side en listado de gastos del dashboard
 - ✅ Formato de miles en inputs de monto y presupuesto (`formatThousands` / `parseNumberInput` en `lib/utils/index.ts`)
+- ✅ Sección "Últimas transacciones" en el dashboard — muestra las 10 más recientes sin filtro de mes (fetch independiente a `/api/expenses?limit=10&orderBy=createdAt`)
+- ✅ Botones Categorías y Agregar manual movidos al dropdown del usuario (UserMenu)

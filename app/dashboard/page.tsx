@@ -59,7 +59,7 @@ export default function DashboardPage() {
   const fetchRecent = useCallback(async () => {
     setRecentLoading(true)
     try {
-      const res = await fetch('/api/expenses?limit=10')
+      const res = await fetch('/api/expenses?limit=10&orderBy=createdAt')
       const data = await res.json()
       setRecentExpenses(data.data ?? [])
     } catch (err) {

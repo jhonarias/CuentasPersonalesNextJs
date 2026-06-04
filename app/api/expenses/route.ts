@@ -31,6 +31,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse<Ex
     const year = searchParams.get('year')
     const categoryId = searchParams.get('categoryId')
     const limit = Number(searchParams.get('limit')) || 500
+    const orderBy = searchParams.get('orderBy') === 'createdAt' ? 'createdAt' : 'date'
 
     const where: Record<string, unknown> = { userId: user.id }
 
@@ -48,7 +49,7 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse<Ex
         category: { select: { id: true, name: true, icon: true, color: true } },
         receipt: { select: { id: true, storageUrl: true, fileName: true } },
       },
-      orderBy: { date: 'desc' },
+      orderBy: { [orderBy]: 'desc' },
       take: limit,
     })
 
