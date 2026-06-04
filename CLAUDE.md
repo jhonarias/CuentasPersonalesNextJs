@@ -258,4 +258,5 @@ git push origin main
 - ✅ Página `/transactions` — últimas 10 transacciones sin filtro de mes, ordenadas por `createdAt`, accesible desde el menú del usuario
 - ✅ Botones Categorías y Agregar manual movidos al dropdown del usuario (UserMenu)
 - ✅ Toggle "Ver todas" / "Paginar" en el listado de transacciones del mes del dashboard
+- ✅ Alertas de presupuesto en el dashboard — muestra categorías que superaron su presupuesto del mes con barra de progreso, % usado y monto de exceso
 - ✅ Al eliminar un gasto, se elimina también su imagen de Supabase Storage (`deleteReceipt` en `lib/db/supabase.ts`)

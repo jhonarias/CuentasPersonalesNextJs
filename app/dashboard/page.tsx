@@ -80,6 +80,12 @@ export default function DashboardPage() {
   const totalSpent = useMemo(() => expenses.reduce((sum, e) => sum + e.amount, 0), [expenses])
   const aiScanned = useMemo(() => expenses.filter((e) => e.isAiScanned).length, [expenses])
 
+  // Categorías que superaron su presupuesto este mes
+  const overBudgetCategories = useMemo(
+    () => categories.filter((c) => c.budget != null && c.total > c.budget),
+    [categories]
+  )
+
   // Lista filtrada por búsqueda
   const filteredExpenses = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -165,6 +171,58 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
+
+        {/* Alertas de presupuesto */}
+        {overBudgetCategories.length > 0 && (
+          <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">⚠️</span>
+              <p className="text-sm font-medium text-red-700 dark:text-red-400">
+                {overBudgetCategories.length === 1
+                  ? '1 categoría superó su presupuesto'
+                  : `${overBudgetCategories.length} categorías superaron su presupuesto`} en {MONTHS[month - 1]}
+              </p>
+            </div>
+            <ul className="space-y-2">
+              {overBudgetCategories.map((cat) => {
+                const excess = cat.total - cat.budget!
+                const pct = Math.round((cat.total / cat.budget!) * 100)
+                return (
+                  <li key={cat.categoryId} className="flex items-center gap-3">
+                    {/* Color de categoría */}
+                    <div
+                      className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-sm"
+                      style={{ backgroundColor: cat.categoryColor + '33' }}
+                    >
+                      {cat.categoryIcon}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-sm font-medium text-red-800 dark:text-red-300 truncate">
+                          {cat.categoryName}
+                        </span>
+                        <span className="text-xs text-red-600 dark:text-red-400 flex-shrink-0">
+                          {pct}% del presupuesto
+                        </span>
+                      </div>
+                      {/* Barra de progreso */}
+                      <div className="h-1.5 bg-red-200 dark:bg-red-900 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-red-500 dark:bg-red-400 rounded-full"
+                          style={{ width: `${Math.min(pct, 100)}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-red-500 dark:text-red-400 mt-1">
+                        {formatCurrency(cat.total)} gastado · presupuesto {formatCurrency(cat.budget!)} · exceso {formatCurrency(excess)}
+                      </p>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
 
         {/* Charts */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
