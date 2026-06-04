@@ -29,13 +29,10 @@ export default function DashboardPage() {
   const [year, setYear] = useState(CURRENT_YEAR)
   const [userInfo, setUserInfo] = useState<{ firstName: string; role: string } | null>(null)
 
-  // Últimas 10 transacciones (sin filtro de mes)
-  const [recentExpenses, setRecentExpenses] = useState<ExpenseWithCategory[]>([])
-  const [recentLoading, setRecentLoading] = useState(true)
-
   // Búsqueda y paginación (client-side)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [showAll, setShowAll] = useState(false)
 
   // Cargar datos del usuario para el menú
   useEffect(() => {
@@ -56,21 +53,6 @@ export default function DashboardPage() {
     loadUser()
   }, [])
 
-  const fetchRecent = useCallback(async () => {
-    setRecentLoading(true)
-    try {
-      const res = await fetch('/api/expenses?limit=10&orderBy=createdAt')
-      const data = await res.json()
-      setRecentExpenses(data.data ?? [])
-    } catch (err) {
-      console.error('Error cargando recientes:', err)
-    } finally {
-      setRecentLoading(false)
-    }
-  }, [])
-
-  useEffect(() => { fetchRecent() }, [fetchRecent])
-
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
@@ -84,13 +66,13 @@ export default function DashboardPage() {
       setCategories(catData.data ?? [])
       setSearch('')
       setPage(1)
+      setShowAll(false)
     } catch (err) {
       console.error('Error cargando datos:', err)
     } finally {
       setLoading(false)
     }
-    fetchRecent()
-  }, [month, year, fetchRecent])
+  }, [month, year])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -158,7 +140,7 @@ export default function DashboardPage() {
               <UserMenu
                 firstName={userInfo.firstName}
                 role={userInfo.role}
-                onExpenseSuccess={() => { fetchData(); fetchRecent() }}
+                onExpenseSuccess={fetchData}
               />
             )}
           </div>
@@ -182,51 +164,6 @@ export default function DashboardPage() {
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">{m.sub}</p>
             </div>
           ))}
-        </div>
-
-        {/* Últimas 10 transacciones — sin filtro de mes */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-            Últimas transacciones
-          </p>
-          {recentLoading ? (
-            <div className="flex items-center justify-center py-6 text-gray-400 text-sm">Cargando...</div>
-          ) : recentExpenses.length === 0 ? (
-            <div className="text-center py-6 text-gray-400 dark:text-gray-600">
-              <p className="text-sm">Sin transacciones aún.</p>
-            </div>
-          ) : (
-            <ul className="divide-y divide-gray-50 dark:divide-gray-800">
-              {recentExpenses.map((expense) => (
-                <li key={expense.id} className="flex items-center gap-2 py-2.5 min-w-0">
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: expense.category.color + '22' }}
-                  >
-                    <span style={{ color: expense.category.color }} className="text-xs">●</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      {expense.merchant || expense.description}
-                    </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
-                      {formatDate(expense.date)} · {expense.isAiScanned ? '🤖 IA' : '✏️ Manual'}
-                    </p>
-                  </div>
-                  <span
-                    className="hidden sm:inline text-xs px-2 py-1 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: expense.category.color + '22', color: expense.category.color }}
-                  >
-                    {expense.category.name}
-                  </span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white flex-shrink-0">
-                    -{formatCurrency(expense.amount)}
-                  </span>
-                  <ExpenseActions expense={expense} onUpdate={() => { fetchData(); fetchRecent() }} onDelete={() => { fetchData(); fetchRecent() }} />
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
 
         {/* Charts */}
@@ -290,7 +227,7 @@ export default function DashboardPage() {
           ) : (
             <>
               <ul className="divide-y divide-gray-50 dark:divide-gray-800">
-                {paginatedExpenses.map((expense) => (
+                {(showAll ? filteredExpenses : paginatedExpenses).map((expense) => (
                   <li key={expense.id} className="flex items-center gap-2 py-3 min-w-0">
 
                     {/* Ícono categoría */}
@@ -338,51 +275,64 @@ export default function DashboardPage() {
               </ul>
 
               {/* Paginador */}
-              {totalPages > 1 && (
+              {(totalPages > 1 || showAll) && (
                 <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-50 dark:border-gray-800">
                   <p className="text-xs text-gray-400 dark:text-gray-500">
                     {filteredExpenses.length} resultado{filteredExpenses.length !== 1 ? 's' : ''}
                     {search && ` para "${search}"`}
                   </p>
                   <div className="flex items-center gap-1">
+                    {/* Toggle Ver todas / Paginar */}
                     <button
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                      onClick={() => { setShowAll((v) => !v); setPage(1) }}
+                      className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-colors mr-2"
                     >
-                      ←
+                      {showAll ? 'Paginar' : 'Ver todas'}
                     </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                      .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
-                      .reduce<(number | '...')[]>((acc, p, idx, arr) => {
-                        if (idx > 0 && (arr[idx - 1] as number) + 1 < p) acc.push('...')
-                        acc.push(p)
-                        return acc
-                      }, [])
-                      .map((p, idx) =>
-                        p === '...' ? (
-                          <span key={`dots-${idx}`} className="px-1 text-xs text-gray-400">…</span>
-                        ) : (
-                          <button
-                            key={p}
-                            onClick={() => setPage(p as number)}
-                            className={`px-2.5 py-1 text-xs rounded-lg border transition-colors ${
-                              page === p
-                                ? 'bg-emerald-600 border-emerald-600 text-white'
-                                : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                            }`}
-                          >
-                            {p}
-                          </button>
-                        )
-                      )}
-                    <button
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={page === totalPages}
-                      className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      →
-                    </button>
+
+                    {/* Botones de página — solo si no está en modo "Ver todas" */}
+                    {!showAll && (
+                      <>
+                        <button
+                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          disabled={page === 1}
+                          className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          ←
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                          .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                          .reduce<(number | '...')[]>((acc, p, idx, arr) => {
+                            if (idx > 0 && (arr[idx - 1] as number) + 1 < p) acc.push('...')
+                            acc.push(p)
+                            return acc
+                          }, [])
+                          .map((p, idx) =>
+                            p === '...' ? (
+                              <span key={`dots-${idx}`} className="px-1 text-xs text-gray-400">…</span>
+                            ) : (
+                              <button
+                                key={p}
+                                onClick={() => setPage(p as number)}
+                                className={`px-2.5 py-1 text-xs rounded-lg border transition-colors ${
+                                  page === p
+                                    ? 'bg-emerald-600 border-emerald-600 text-white'
+                                    : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                }`}
+                              >
+                                {p}
+                              </button>
+                            )
+                          )}
+                        <button
+                          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={page === totalPages}
+                          className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          →
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               )}

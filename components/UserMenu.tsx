@@ -67,6 +67,14 @@ export default function UserMenu({ firstName, role, onExpenseSuccess }: Props) {
             🏷️ Categorías
           </Link>
 
+          <Link
+            href="/transactions"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition"
+          >
+            🕐 Últimas transacciones
+          </Link>
+
           <div onClick={() => setOpen(false)}>
             <ManualExpenseButton
               onSuccess={onExpenseSuccess ?? (() => {})}

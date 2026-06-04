@@ -255,6 +255,7 @@ git push origin main
 - ✅ Deploy en Vercel + Supabase
 - ✅ Búsqueda y paginación client-side en listado de gastos del dashboard
 - ✅ Formato de miles en inputs de monto y presupuesto (`formatThousands` / `parseNumberInput` en `lib/utils/index.ts`)
-- ✅ Sección "Últimas transacciones" en el dashboard — muestra las 10 más recientes sin filtro de mes (fetch independiente a `/api/expenses?limit=10&orderBy=createdAt`)
+- ✅ Página `/transactions` — últimas 10 transacciones sin filtro de mes, ordenadas por `createdAt`, accesible desde el menú del usuario
 - ✅ Botones Categorías y Agregar manual movidos al dropdown del usuario (UserMenu)
+- ✅ Toggle "Ver todas" / "Paginar" en el listado de transacciones del mes del dashboard
 - ✅ Al eliminar un gasto, se elimina también su imagen de Supabase Storage (`deleteReceipt` en `lib/db/supabase.ts`)
