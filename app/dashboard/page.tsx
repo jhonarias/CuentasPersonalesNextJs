@@ -29,6 +29,10 @@ export default function DashboardPage() {
   const [year, setYear] = useState(CURRENT_YEAR)
   const [userInfo, setUserInfo] = useState<{ firstName: string; role: string } | null>(null)
 
+  // Últimas 10 transacciones (sin filtro de mes)
+  const [recentExpenses, setRecentExpenses] = useState<ExpenseWithCategory[]>([])
+  const [recentLoading, setRecentLoading] = useState(true)
+
   // Búsqueda y paginación (client-side)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -52,11 +56,25 @@ export default function DashboardPage() {
     loadUser()
   }, [])
 
+  const fetchRecent = useCallback(async () => {
+    setRecentLoading(true)
+    try {
+      const res = await fetch('/api/expenses?limit=10')
+      const data = await res.json()
+      setRecentExpenses(data.data ?? [])
+    } catch (err) {
+      console.error('Error cargando recientes:', err)
+    } finally {
+      setRecentLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { fetchRecent() }, [fetchRecent])
+
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       const [expRes, catRes] = await Promise.all([
-        // Sin limit para obtener todos los gastos del mes
         fetch(`/api/expenses?month=${month}&year=${year}`),
         fetch(`/api/categories?month=${month}&year=${year}`),
       ])
@@ -64,7 +82,6 @@ export default function DashboardPage() {
       const catData = await catRes.json()
       setExpenses(expData.data ?? [])
       setCategories(catData.data ?? [])
-      // Resetear búsqueda y página al cambiar mes
       setSearch('')
       setPage(1)
     } catch (err) {
@@ -72,7 +89,8 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [month, year])
+    fetchRecent()
+  }, [month, year, fetchRecent])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -140,7 +158,7 @@ export default function DashboardPage() {
               <UserMenu
                 firstName={userInfo.firstName}
                 role={userInfo.role}
-                onExpenseSuccess={fetchData}
+                onExpenseSuccess={() => { fetchData(); fetchRecent() }}
               />
             )}
           </div>
@@ -164,6 +182,51 @@ export default function DashboardPage() {
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">{m.sub}</p>
             </div>
           ))}
+        </div>
+
+        {/* Últimas 10 transacciones — sin filtro de mes */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+            Últimas transacciones
+          </p>
+          {recentLoading ? (
+            <div className="flex items-center justify-center py-6 text-gray-400 text-sm">Cargando...</div>
+          ) : recentExpenses.length === 0 ? (
+            <div className="text-center py-6 text-gray-400 dark:text-gray-600">
+              <p className="text-sm">Sin transacciones aún.</p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-50 dark:divide-gray-800">
+              {recentExpenses.map((expense) => (
+                <li key={expense.id} className="flex items-center gap-2 py-2.5 min-w-0">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: expense.category.color + '22' }}
+                  >
+                    <span style={{ color: expense.category.color }} className="text-xs">●</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {expense.merchant || expense.description}
+                    </p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
+                      {formatDate(expense.date)} · {expense.isAiScanned ? '🤖 IA' : '✏️ Manual'}
+                    </p>
+                  </div>
+                  <span
+                    className="hidden sm:inline text-xs px-2 py-1 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: expense.category.color + '22', color: expense.category.color }}
+                  >
+                    {expense.category.name}
+                  </span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white flex-shrink-0">
+                    -{formatCurrency(expense.amount)}
+                  </span>
+                  <ExpenseActions expense={expense} onUpdate={() => { fetchData(); fetchRecent() }} onDelete={() => { fetchData(); fetchRecent() }} />
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* Charts */}
