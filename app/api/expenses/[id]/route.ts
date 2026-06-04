@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
 import { getSessionUser } from '@/lib/auth/supabase-server'
+import { deleteReceipt } from '@/lib/db/supabase'
 import { z } from 'zod'
 
 const UpdateExpenseSchema = z.object({
@@ -95,7 +96,24 @@ export async function DELETE(
     const user = await getSessionUser()
     if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
+    // Buscar el gasto con su receipt antes de eliminar
+    const expense = await prisma.expense.findUnique({
+      where: { id: params.id, userId: user.id },
+      include: { receipt: { select: { storageUrl: true } } },
+    })
+
+    if (!expense) {
+      return NextResponse.json({ error: 'Gasto no encontrado' }, { status: 404 })
+    }
+
+    // Eliminar imagen de Supabase Storage si existe
+    if (expense.receipt?.storageUrl) {
+      await deleteReceipt(expense.receipt.storageUrl)
+    }
+
+    // Eliminar gasto (cascade elimina el registro Receipt en la DB)
     await prisma.expense.delete({ where: { id: params.id, userId: user.id } })
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('[DELETE /api/expenses/[id]]', error)

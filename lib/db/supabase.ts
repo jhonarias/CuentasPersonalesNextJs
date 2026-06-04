@@ -85,3 +85,33 @@ export async function uploadReceipt(
     compressedSize: compressedBuffer.length,
   }
 }
+
+/**
+ * Elimina una imagen de Supabase Storage a partir de su URL pública.
+ * Extrae el path del bucket desde la URL y lo elimina.
+ * No lanza error si el archivo no existe — operación idempotente.
+ */
+export async function deleteReceipt(storageUrl: string): Promise<void> {
+  try {
+    // URL pública: https://<project>.supabase.co/storage/v1/object/public/receipts/<path>
+    const marker = `/${RECEIPTS_BUCKET}/`
+    const idx = storageUrl.indexOf(marker)
+    if (idx === -1) {
+      console.warn('[Storage] No se pudo extraer el path de la URL:', storageUrl)
+      return
+    }
+    const filePath = storageUrl.slice(idx + marker.length)
+
+    const { error } = await supabaseAdmin.storage
+      .from(RECEIPTS_BUCKET)
+      .remove([filePath])
+
+    if (error) {
+      console.error('[Storage] Error eliminando archivo:', error.message)
+    } else {
+      console.log('[Storage] Archivo eliminado:', filePath)
+    }
+  } catch (err) {
+    console.error('[Storage] Error inesperado al eliminar:', err)
+  }
+}

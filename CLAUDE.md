@@ -211,6 +211,20 @@ La app es una PWA. Al limpiar caché del navegador (DevTools → Application →
 
 ---
 
+## Reglas de trabajo
+
+Antes de afirmar cómo funciona algo en el código, **siempre buscar primero** usando grep o leyendo los archivos relevantes. Nunca asumir sin verificar.
+
+```bash
+# Buscar una función o patrón en todo el proyecto
+grep -r "nombreFuncion\|patron" --include="*.ts" --include="*.tsx" .
+
+# Buscar en un directorio específico
+grep -r "compress" lib/ --include="*.ts"
+```
+
+---
+
 ## Comandos Útiles
 
 ```bash
@@ -243,3 +257,4 @@ git push origin main
 - ✅ Formato de miles en inputs de monto y presupuesto (`formatThousands` / `parseNumberInput` en `lib/utils/index.ts`)
 - ✅ Sección "Últimas transacciones" en el dashboard — muestra las 10 más recientes sin filtro de mes (fetch independiente a `/api/expenses?limit=10&orderBy=createdAt`)
 - ✅ Botones Categorías y Agregar manual movidos al dropdown del usuario (UserMenu)
+- ✅ Al eliminar un gasto, se elimina también su imagen de Supabase Storage (`deleteReceipt` en `lib/db/supabase.ts`)
