@@ -22,7 +22,11 @@ export function formatCurrency(amount: number, currency = 'COP'): string {
  */
 export function formatDate(date: Date | string, fmt = 'dd MMM yyyy'): string {
   const d = typeof date === 'string' ? new Date(date) : date
-  return format(d, fmt, { locale: es })
+  // Las fechas se guardan como medianoche UTC (ej: 2026-06-03T00:00:00Z).
+  // Al convertir a hora local (UTC-5) el día retrocede un día.
+  // Usamos las partes UTC para mostrar siempre la fecha correcta sin importar la zona horaria.
+  const utcDate = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+  return format(utcDate, fmt, { locale: es })
 }
 
 /**
