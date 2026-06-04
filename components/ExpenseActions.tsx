@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { formatThousands, parseNumberInput } from '@/lib/utils'
 
 interface Category {
   id: string
@@ -59,7 +60,12 @@ export default function ExpenseActions({ expense, onUpdate, onDelete }: ExpenseA
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+    const { name, value } = e.target
+    if (name === 'amount') {
+      setForm((prev) => ({ ...prev, amount: parseNumberInput(value) }))
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }))
+    }
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -194,7 +200,8 @@ export default function ExpenseActions({ expense, onUpdate, onDelete }: ExpenseA
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Monto *</label>
-                    <input name="amount" type="number" step="0.01" min="0" required value={form.amount} onChange={handleChange}
+                    <input name="amount" type="text" inputMode="decimal" required
+                      value={formatThousands(form.amount)} onChange={handleChange}
                       className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500" />
                   </div>
 
