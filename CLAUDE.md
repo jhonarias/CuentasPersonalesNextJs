@@ -259,4 +259,5 @@ git push origin main
 - ✅ Botones Categorías y Agregar manual movidos al dropdown del usuario (UserMenu)
 - ✅ Toggle "Ver todas" / "Paginar" en el listado de transacciones del mes del dashboard
 - ✅ Alertas de presupuesto en el dashboard — muestra categorías que superaron su presupuesto del mes con barra de progreso, % usado y monto de exceso
+- ✅ Módulo de reportes (`/reports`) — filtro por múltiples meses y años, búsqueda opcional, tabla de resultados con total, exporta a PDF via `window.print()`
 - ✅ Al eliminar un gasto, se elimina también su imagen de Supabase Storage (`deleteReceipt` en `lib/db/supabase.ts`)
