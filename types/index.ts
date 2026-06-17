@@ -89,3 +89,40 @@ export interface ApiResponse<T> {
   error?: string
   message?: string
 }
+
+// ── Módulo Préstamos ──────────────────────────────────────────────────────────
+
+export interface PersonWithSummary {
+  id: string
+  name: string
+  phone: string | null
+  notes: string | null
+  totalDebt: number
+  totalPaid: number
+  remaining: number
+  debtCount: number
+  createdAt: Date
+}
+
+export interface DebtWithPayments {
+  id: string
+  description: string
+  totalAmount: number
+  paid: number
+  remaining: number
+  date: Date
+  dueDate: Date | null
+  notes: string | null
+  type: 'receivable' | 'payable'
+  personId: string
+  payments: DebtPaymentItem[]
+  createdAt: Date
+}
+
+export interface DebtPaymentItem {
+  id: string
+  amount: number
+  notes: string | null
+  date: Date
+  createdAt: Date
+}

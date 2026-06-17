@@ -65,10 +65,13 @@ profiles.status: 'pending' | 'active' | 'blocked'
 ### Schema Prisma (`prisma/schema.prisma`)
 
 ```
-Category    — id, name, icon, color, budget?, userId? @map("user_id"), createdAt
-Expense     — id, amount, description, date, merchant?, notes?, isAiScanned, confidence?, rawOcrData?, userId? @map("user_id"), categoryId, createdAt, updatedAt
-Receipt     — id, storageUrl, fileName, mimeType, sizeBytes, processedAt, expenseId (unique)
+Category      — id, name, icon, color, budget?, userId? @map("user_id"), createdAt
+Expense       — id, amount, description, date, merchant?, notes?, isAiScanned, confidence?, rawOcrData?, userId? @map("user_id"), categoryId, createdAt, updatedAt
+Receipt       — id, storageUrl, fileName, mimeType, sizeBytes, processedAt, expenseId (unique)
 MonthlyBudget — id, year, month, amount, createdAt (unique: year+month)
+Person        — id, name, phone?, notes?, userId @map("user_id"), createdAt
+Debt          — id, description, totalAmount @map("total_amount"), date, dueDate?, notes?, type ('receivable'|'payable'), userId @map("user_id"), personId @map("person_id"), createdAt
+DebtPayment   — id, amount, notes?, date, debtId @map("debt_id"), createdAt
 ```
 
 > **Importante:** `userId` en Prisma mapea a `user_id` (snake_case) en la DB via `@map("user_id")`.  
@@ -107,6 +110,7 @@ handle_new_user() — AFTER INSERT ON auth.users
 │   ├── pending/page.tsx              # Pantalla cuenta pendiente
 │   ├── categories/page.tsx           # CRUD de categorías
 │   ├── admin/users/page.tsx          # Panel admin de usuarios
+│   ├── prestamos/page.tsx            # Módulo Préstamos — personas, deudas, abonos
 │   └── api/
 │       ├── expenses/                 # GET (list: month,year,limit,orderBy) / POST (crear)
 │       ├── expenses/[id]/            # GET / PUT / DELETE
@@ -115,8 +119,14 @@ handle_new_user() — AFTER INSERT ON auth.users
 │       ├── categories/[id]/          # PUT / DELETE
 │       ├── scan/                     # POST — escanear factura con IA
 │       ├── auth/register/            # POST — registro de usuario
-│       └── admin/users/              # GET — listar usuarios
-│           └── [id]/                 # PATCH — aprobar/bloquear
+│       ├── admin/users/              # GET — listar usuarios
+│       │   └── [id]/                 # PATCH — aprobar/bloquear
+│       ├── people/                   # GET (con resumen de deudas) / POST crear persona
+│       │   └── [id]/                 # PUT / DELETE persona
+│       └── debts/                    # GET (por ?personId) / POST crear deuda
+│           └── [id]/                 # PUT / DELETE deuda
+│               └── payments/         # POST registrar abono
+│                   └── [paymentId]/  # DELETE eliminar abono
 ├── components/
 │   ├── UserMenu.tsx                  # Avatar + dropdown (logout, admin link)
 │   ├── ScanButton.tsx                # Botón escanear factura con IA
@@ -143,7 +153,8 @@ handle_new_user() — AFTER INSERT ON auth.users
     ├── schema.prisma
     └── migrations/
         ├── add_users.sql             # Migración manual: profiles, RLS, trigger
-        └── add_users_notes.md        # Instrucciones de despliegue
+        ├── add_users_notes.md        # Instrucciones de despliegue
+        └── add_loans.sql             # Módulo Préstamos: people, debts, debt_payments
 ```
 
 ---
@@ -262,3 +273,4 @@ git push origin main
 - ✅ Módulo de reportes (`/reports`) — filtro por múltiples meses y años, búsqueda opcional, tabla de resultados con total, exporta a PDF via `window.print()`
 - ✅ Al eliminar un gasto, se elimina también su imagen de Supabase Storage (`deleteReceipt` en `lib/db/supabase.ts`)
 - ✅ Filtro por categoría en el dashboard — checkboxes en el panel "Por categoría" debajo del pie chart; selección múltiple, filtro combinado con búsqueda de texto, botón "Limpiar filtro", se resetea al cambiar mes/año
+- ✅ Módulo Préstamos (`/prestamos`) — personas deudoras/acreedoras, deudas con abonos parciales, tabs "Me deben" / "Le debo a", balance neto, lazy loading de deudas por persona, barra de progreso, badge "Saldada"

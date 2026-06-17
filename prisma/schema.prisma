@@ -70,3 +70,46 @@ model MonthlyBudget {
   @@unique([year, month])
   @@map("monthly_budgets")
 }
+
+// ── Módulo Préstamos ──────────────────────────────────────────────────────────
+
+model Person {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  notes     String?
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now())
+  debts     Debt[]
+
+  @@map("people")
+}
+
+model Debt {
+  id          String        @id @default(cuid())
+  description String
+  totalAmount Float         @map("total_amount")
+  date        DateTime
+  dueDate     DateTime?     @map("due_date")
+  notes       String?
+  type        String        // 'receivable' | 'payable'
+  userId      String        @map("user_id")
+  personId    String        @map("person_id")
+  person      Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
+  payments    DebtPayment[]
+  createdAt   DateTime      @default(now())
+
+  @@map("debts")
+}
+
+model DebtPayment {
+  id        String   @id @default(cuid())
+  amount    Float
+  notes     String?
+  date      DateTime
+  debtId    String   @map("debt_id")
+  debt      Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("debt_payments")
+}
