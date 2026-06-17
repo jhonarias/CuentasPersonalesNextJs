@@ -261,3 +261,4 @@ git push origin main
 - ✅ Alertas de presupuesto en el dashboard — muestra categorías que superaron su presupuesto del mes con barra de progreso, % usado y monto de exceso
 - ✅ Módulo de reportes (`/reports`) — filtro por múltiples meses y años, búsqueda opcional, tabla de resultados con total, exporta a PDF via `window.print()`
 - ✅ Al eliminar un gasto, se elimina también su imagen de Supabase Storage (`deleteReceipt` en `lib/db/supabase.ts`)
+- ✅ Filtro por categoría en el dashboard — checkboxes en el panel "Por categoría" debajo del pie chart; selección múltiple, filtro combinado con búsqueda de texto, botón "Limpiar filtro", se resetea al cambiar mes/año

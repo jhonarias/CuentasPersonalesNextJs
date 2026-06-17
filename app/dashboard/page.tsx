@@ -29,10 +29,11 @@ export default function DashboardPage() {
   const [year, setYear] = useState(CURRENT_YEAR)
   const [userInfo, setUserInfo] = useState<{ firstName: string; role: string } | null>(null)
 
-  // Búsqueda y paginación (client-side)
+  // Búsqueda, filtro por categoría y paginación (client-side)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [showAll, setShowAll] = useState(false)
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([])
 
   // Cargar datos del usuario para el menú
   useEffect(() => {
@@ -67,6 +68,7 @@ export default function DashboardPage() {
       setSearch('')
       setPage(1)
       setShowAll(false)
+      setSelectedCategoryIds([])
     } catch (err) {
       console.error('Error cargando datos:', err)
     } finally {
@@ -86,16 +88,24 @@ export default function DashboardPage() {
     [categories]
   )
 
-  // Lista filtrada por búsqueda
+  // Lista filtrada por búsqueda y/o categorías seleccionadas
   const filteredExpenses = useMemo(() => {
+    let result = expenses
+    // Filtro por categorías
+    if (selectedCategoryIds.length > 0) {
+      result = result.filter((e) => selectedCategoryIds.includes(e.categoryId))
+    }
+    // Filtro por texto
     const q = search.trim().toLowerCase()
-    if (!q) return expenses
-    return expenses.filter((e) =>
-      e.description.toLowerCase().includes(q) ||
-      (e.merchant ?? '').toLowerCase().includes(q) ||
-      e.category.name.toLowerCase().includes(q)
-    )
-  }, [expenses, search])
+    if (q) {
+      result = result.filter((e) =>
+        e.description.toLowerCase().includes(q) ||
+        (e.merchant ?? '').toLowerCase().includes(q) ||
+        e.category.name.toLowerCase().includes(q)
+      )
+    }
+    return result
+  }, [expenses, search, selectedCategoryIds])
 
   // Paginación sobre la lista filtrada
   const totalPages = Math.max(1, Math.ceil(filteredExpenses.length / PAGE_SIZE))
@@ -107,6 +117,14 @@ export default function DashboardPage() {
   // Resetear página cuando cambia la búsqueda
   const handleSearch = (value: string) => {
     setSearch(value)
+    setPage(1)
+  }
+
+  // Toggle de filtro por categoría
+  const toggleCategory = (id: string) => {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    )
     setPage(1)
   }
 
@@ -233,10 +251,67 @@ export default function DashboardPage() {
             <ExpenseChart expenses={expenses} month={month} year={year} />
           </div>
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-              Por categoría
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                Por categoría
+              </p>
+              {selectedCategoryIds.length > 0 && (
+                <button
+                  onClick={() => { setSelectedCategoryIds([]); setPage(1) }}
+                  className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline"
+                >
+                  Limpiar filtro
+                </button>
+              )}
+            </div>
             <CategoryPieChart categories={categories} />
+
+            {/* Lista de categorías con checkboxes para filtrar */}
+            {categories.length > 0 && (
+              <ul className="mt-3 space-y-1">
+                {categories.map((cat) => {
+                  const isSelected = selectedCategoryIds.includes(cat.categoryId)
+                  return (
+                    <li key={cat.categoryId}>
+                      <button
+                        type="button"
+                        onClick={() => toggleCategory(cat.categoryId)}
+                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors ${
+                          isSelected
+                            ? 'bg-gray-100 dark:bg-gray-800'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'
+                        }`}
+                      >
+                        {/* Checkbox visual */}
+                        <span
+                          className={`w-3.5 h-3.5 rounded flex-shrink-0 border-2 flex items-center justify-center transition-colors`}
+                          style={{
+                            borderColor: cat.categoryColor,
+                            backgroundColor: isSelected ? cat.categoryColor : 'transparent',
+                          }}
+                        >
+                          {isSelected && (
+                            <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 10 8">
+                              <path d="M1 4l3 3 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </span>
+                        {/* Ícono */}
+                        <span className="text-sm">{cat.categoryIcon}</span>
+                        {/* Nombre */}
+                        <span className="flex-1 text-xs text-gray-700 dark:text-gray-300 truncate">
+                          {cat.categoryName}
+                        </span>
+                        {/* Monto */}
+                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 flex-shrink-0">
+                          {formatCurrency(cat.total)}
+                        </span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
           </div>
         </div>
 
@@ -337,7 +412,8 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-50 dark:border-gray-800">
                   <p className="text-xs text-gray-400 dark:text-gray-500">
                     {filteredExpenses.length} resultado{filteredExpenses.length !== 1 ? 's' : ''}
-                    {search && ` para "${search}"`}
+                    {selectedCategoryIds.length > 0 && ` · ${selectedCategoryIds.length} categoría${selectedCategoryIds.length !== 1 ? 's' : ''}`}
+                    {search && ` · "${search}"`}
                   </p>
                   <div className="flex items-center gap-1">
                     {/* Toggle Ver todas / Paginar */}
