@@ -79,7 +79,7 @@ model Person {
   phone     String?
   notes     String?
   userId    String   @map("user_id")
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
   debts     Debt[]
 
   @@map("people")
@@ -97,7 +97,7 @@ model Debt {
   personId    String        @map("person_id")
   person      Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
   payments    DebtPayment[]
-  createdAt   DateTime      @default(now())
+  createdAt   DateTime      @default(now()) @map("created_at")
 
   @@map("debts")
 }
@@ -109,7 +109,7 @@ model DebtPayment {
   date      DateTime
   debtId    String   @map("debt_id")
   debt      Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@map("debt_payments")
 }
