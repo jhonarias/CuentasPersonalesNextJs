@@ -302,8 +302,11 @@ export default function DashboardPage() {
                         <span className="flex-1 text-xs text-gray-700 dark:text-gray-300 truncate">
                           {cat.categoryName}
                         </span>
-                        {/* Monto */}
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 flex-shrink-0">
+                        {/* Porcentaje + Monto */}
+                        <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
+                          {cat.percentage}%
+                        </span>
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300 flex-shrink-0">
                           {formatCurrency(cat.total)}
                         </span>
                       </button>

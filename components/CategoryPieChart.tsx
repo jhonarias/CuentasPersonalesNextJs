@@ -52,30 +52,12 @@ export default function CategoryPieChart({ categories }: Props) {
   }, [categories])
 
   return (
-    <div>
-      <div style={{ position: 'relative', height: '140px', marginBottom: '1rem' }}>
-        <canvas
-          ref={canvasRef}
-          role="img"
-          aria-label="Distribución de gastos por categoría"
-        />
-      </div>
-      <ul className="space-y-2">
-        {categories.slice(0, 6).map((cat) => (
-          <li key={cat.categoryId} className="flex items-center justify-between text-xs">
-            <span className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: cat.categoryColor }}
-              />
-              {cat.categoryName}
-            </span>
-            <span className="font-medium text-gray-800 dark:text-gray-200">
-              {cat.percentage}%
-            </span>
-          </li>
-        ))}
-      </ul>
+    <div style={{ position: 'relative', height: '140px' }}>
+      <canvas
+        ref={canvasRef}
+        role="img"
+        aria-label="Distribución de gastos por categoría"
+      />
     </div>
   )
 }
