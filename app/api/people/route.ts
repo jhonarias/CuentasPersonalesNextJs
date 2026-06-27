@@ -10,8 +10,8 @@ import { z } from 'zod'
 
 const PersonSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
-  phone: z.string().optional(),
-  notes: z.string().optional(),
+  phone: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
 })
 
 export async function GET(req: NextRequest) {
