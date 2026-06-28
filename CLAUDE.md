@@ -288,6 +288,6 @@ git push origin main
 - ✅ Al eliminar un gasto, se elimina también su imagen de Supabase Storage (`deleteReceipt` en `lib/db/supabase.ts`)
 - ✅ Filtro por categoría en el dashboard — checkboxes en el panel "Por categoría" debajo del pie chart; selección múltiple, filtro combinado con búsqueda de texto, botón "Limpiar filtro", se resetea al cambiar mes/año
 - ✅ Módulo Préstamos (`/prestamos`) — personas deudoras/acreedoras, deudas con abonos parciales, tabs "Me deben" / "Le debo a", balance neto, lazy loading de deudas por persona, barra de progreso, badge "Saldada"
-- ✅ Módulo Bóveda (`/boveda`) — gestor de documentos personales (PDFs e imágenes) con categorías propias, tags, búsqueda, vista previa inline (iframe para PDF, img para imágenes), descarga y links temporales para compartir (24h via `VaultShare`)
+- ✅ Módulo Bóveda (`/boveda`) — gestor de documentos personales (PDFs e imágenes) con categorías propias, tags, búsqueda, vista previa inline (iframe para PDF, img para imágenes), descarga, links temporales para compartir (24h via `VaultShare`) y edición de metadatos (título, descripción, categoría, tags) sin reemplazar el archivo
 
 > **Nota Bóveda:** El bucket `vault` en Supabase Storage debe crearse manualmente (privado, sin acceso público). Los documentos solo se acceden vía signed URLs generadas on-demand (`getVaultSignedUrl`). La URL pública nunca se expone — `storageUrl` y `storagePath` guardan el path relativo dentro del bucket.

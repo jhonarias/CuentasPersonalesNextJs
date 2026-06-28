@@ -322,15 +322,154 @@ function UploadModal({ categories, defaultCategoryId, onClose, onSuccess }: Uplo
   )
 }
 
+// ── Edit Document Modal ────────────────────────────────────────────────────────
+
+interface EditDocModalProps {
+  doc: VaultDocumentItem
+  categories: VaultCategoryItem[]
+  onClose: () => void
+  onSave: (doc: VaultDocumentItem) => void
+}
+
+function EditDocModal({ doc, categories, onClose, onSave }: EditDocModalProps) {
+  const [title, setTitle] = useState(doc.title)
+  const [description, setDescription] = useState(doc.description ?? '')
+  const [categoryId, setCategoryId] = useState(doc.categoryId)
+  const [tags, setTags] = useState<string[]>(doc.tags)
+  const [tagInput, setTagInput] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  function addTag(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      const t = tagInput.trim().toLowerCase()
+      if (t && !tags.includes(t)) setTags([...tags, t])
+      setTagInput('')
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!title.trim()) { setError('El título es requerido'); return }
+    setSaving(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/vault/documents/${doc.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          description: description.trim() || null,
+          categoryId,
+          tags,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) { setError(json.error ?? 'Error'); return }
+      const newCategory = categories.find((c) => c.id === categoryId) ?? doc.category
+      onSave({
+        ...doc,
+        title: title.trim(),
+        description: description.trim() || null,
+        categoryId,
+        category: { id: newCategory.id, name: newCategory.name, icon: newCategory.icon, color: newCategory.color },
+        tags,
+      })
+      onClose()
+    } catch {
+      setError('Error de conexión')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md p-6 my-4">
+        <h2 className="text-lg font-semibold text-white mb-4">Editar documento</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">Título *</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">Descripción</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 text-sm resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">Categoría</label>
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm"
+            >
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">Tags (Enter para agregar)</label>
+            <input
+              type="text"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={addTag}
+              placeholder="Ej: contrato, 2024..."
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 text-sm"
+            />
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {tags.map((t) => (
+                  <span key={t} className="flex items-center gap-1 px-2 py-0.5 bg-gray-700 rounded-full text-xs text-gray-200">
+                    {t}
+                    <button type="button" onClick={() => setTags(tags.filter((x) => x !== t))} className="text-gray-400 hover:text-white">×</button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {error && <p className="text-sm text-red-400">{error}</p>}
+
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 rounded-lg border border-gray-700 text-gray-300 hover:bg-gray-800 transition text-sm">
+              Cancelar
+            </button>
+            <button type="submit" disabled={saving} className="flex-1 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition text-sm font-medium disabled:opacity-50">
+              {saving ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ── Preview Modal ──────────────────────────────────────────────────────────────
 
 interface PreviewModalProps {
   doc: VaultDocumentItem
   onClose: () => void
   onDelete: (id: string) => void
+  onEdit: (doc: VaultDocumentItem) => void
 }
 
-function PreviewModal({ doc, onClose, onDelete }: PreviewModalProps) {
+function PreviewModal({ doc, onClose, onDelete, onEdit }: PreviewModalProps) {
   const [url, setUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [shareMsg, setShareMsg] = useState('')
@@ -395,6 +534,13 @@ function PreviewModal({ doc, onClose, onDelete }: PreviewModalProps) {
           <p className="text-xs text-gray-400">{doc.fileName} · {formatSize(doc.sizeBytes)}</p>
         </div>
         <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+          <button
+            onClick={() => { onClose(); onEdit(doc) }}
+            title="Editar"
+            className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition text-lg"
+          >
+            ✏️
+          </button>
           <button
             onClick={handleDownload}
             disabled={!url}
@@ -471,10 +617,11 @@ function PreviewModal({ doc, onClose, onDelete }: PreviewModalProps) {
 interface DocCardProps {
   doc: VaultDocumentItem
   onPreview: (doc: VaultDocumentItem) => void
+  onEdit: (doc: VaultDocumentItem) => void
   onDelete: (id: string) => void
 }
 
-function DocCard({ doc, onPreview, onDelete }: DocCardProps) {
+function DocCard({ doc, onPreview, onEdit, onDelete }: DocCardProps) {
   const isPdf = doc.mimeType === 'application/pdf'
   const isImage = doc.mimeType.startsWith('image/')
 
@@ -496,6 +643,13 @@ function DocCard({ doc, onPreview, onDelete }: DocCardProps) {
           title="Vista previa"
         >
           👁
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onEdit(doc) }}
+          className="p-2 rounded-full bg-gray-900/80 text-white hover:bg-gray-800 text-lg"
+          title="Editar"
+        >
+          ✏️
         </button>
       </div>
 
@@ -541,6 +695,7 @@ export default function BovedaPage() {
 
   // Modals
   const [previewDoc, setPreviewDoc] = useState<VaultDocumentItem | null>(null)
+  const [editingDoc, setEditingDoc] = useState<VaultDocumentItem | null>(null)
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [editingCategory, setEditingCategory] = useState<VaultCategoryItem | null>(null)
@@ -615,6 +770,10 @@ export default function BovedaPage() {
     setCategories((prev) =>
       prev.map((c) => c.id === doc.categoryId ? { ...c, documentCount: c.documentCount + 1 } : c)
     )
+  }
+
+  function handleDocEdited(updated: VaultDocumentItem) {
+    setDocuments((prev) => prev.map((d) => d.id === updated.id ? updated : d))
   }
 
   function handleDocDeleted(id: string) {
@@ -812,6 +971,7 @@ export default function BovedaPage() {
                   key={doc.id}
                   doc={doc}
                   onPreview={setPreviewDoc}
+                  onEdit={setEditingDoc}
                   onDelete={handleDocDeleted}
                 />
               ))}
@@ -843,6 +1003,16 @@ export default function BovedaPage() {
           doc={previewDoc}
           onClose={() => setPreviewDoc(null)}
           onDelete={handleDocDeleted}
+          onEdit={setEditingDoc}
+        />
+      )}
+
+      {editingDoc && (
+        <EditDocModal
+          doc={editingDoc}
+          categories={categories}
+          onClose={() => setEditingDoc(null)}
+          onSave={handleDocEdited}
         />
       )}
     </div>
