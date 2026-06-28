@@ -113,3 +113,47 @@ model DebtPayment {
 
   @@map("debt_payments")
 }
+
+// ── Módulo Bóveda ──────────────────────────────────────────────────────────────
+
+model VaultCategory {
+  id        String          @id @default(cuid())
+  name      String
+  icon      String
+  color     String
+  userId    String          @map("user_id")
+  createdAt DateTime        @default(now()) @map("created_at")
+  documents VaultDocument[]
+
+  @@map("vault_categories")
+}
+
+model VaultDocument {
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  storageUrl  String         @map("storage_url")
+  storagePath String         @map("storage_path")
+  fileName    String         @map("file_name")
+  mimeType    String         @map("mime_type")
+  sizeBytes   Int            @map("size_bytes")
+  tags        String[]
+  userId      String         @map("user_id")
+  categoryId  String         @map("category_id")
+  category    VaultCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  shares      VaultShare[]
+  createdAt   DateTime       @default(now()) @map("created_at")
+
+  @@map("vault_documents")
+}
+
+model VaultShare {
+  id         String        @id @default(cuid())
+  token      String        @unique
+  expiresAt  DateTime      @map("expires_at")
+  documentId String        @map("document_id")
+  document   VaultDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdAt  DateTime      @default(now()) @map("created_at")
+
+  @@map("vault_shares")
+}

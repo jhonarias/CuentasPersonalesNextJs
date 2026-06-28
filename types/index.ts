@@ -126,3 +126,29 @@ export interface DebtPaymentItem {
   date: Date
   createdAt: Date
 }
+
+// ── Módulo Bóveda ──────────────────────────────────────────────────────────────
+
+export interface VaultCategoryItem {
+  id: string
+  name: string
+  icon: string
+  color: string
+  documentCount: number
+  createdAt: Date
+}
+
+export interface VaultDocumentItem {
+  id: string
+  title: string
+  description: string | null
+  storageUrl: string
+  storagePath: string
+  fileName: string
+  mimeType: string
+  sizeBytes: number
+  tags: string[]
+  categoryId: string
+  category: { id: string; name: string; icon: string; color: string }
+  createdAt: Date
+}

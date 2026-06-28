@@ -115,3 +115,61 @@ export async function deleteReceipt(storageUrl: string): Promise<void> {
     console.error('[Storage] Error inesperado al eliminar:', err)
   }
 }
+
+// ── Módulo Bóveda ──────────────────────────────────────────────────────────────
+
+export const VAULT_BUCKET = 'vault'
+
+/**
+ * Sube un documento a la Bóveda en Supabase Storage (bucket privado)
+ * Para imágenes aplica compresión, PDFs se suben tal cual.
+ * Retorna path en el bucket (usado para generar signed URLs)
+ */
+export async function uploadVaultDocument(
+  file: File | Blob,
+  fileName: string,
+  userId: string,
+  docId: string
+): Promise<{ path: string; sizeBytes: number; mimeType: string }> {
+  const arrayBuffer = await file.arrayBuffer()
+  const inputBuffer = Buffer.from(arrayBuffer)
+  const mimeType = file instanceof File ? file.type : 'application/octet-stream'
+
+  const { buffer: finalBuffer, mimeType: finalMimeType } = await compressImage(inputBuffer, mimeType)
+
+  const ext = finalMimeType === 'application/pdf' ? 'pdf' : 'jpg'
+  const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/\.[^.]+$/, '')
+  const path = `${userId}/${docId}_${safeName}.${ext}`
+
+  const { error } = await supabaseAdmin.storage
+    .from(VAULT_BUCKET)
+    .upload(path, finalBuffer, { contentType: finalMimeType, upsert: false })
+
+  if (error) throw new Error(`Error subiendo documento: ${error.message}`)
+
+  return { path, sizeBytes: finalBuffer.length, mimeType: finalMimeType }
+}
+
+/**
+ * Genera una URL firmada temporal para acceder a un documento privado de la Bóveda
+ */
+export async function getVaultSignedUrl(path: string, expiresInSeconds = 3600): Promise<string> {
+  const { data, error } = await supabaseAdmin.storage
+    .from(VAULT_BUCKET)
+    .createSignedUrl(path, expiresInSeconds)
+
+  if (error || !data?.signedUrl) throw new Error(`Error generando URL: ${error?.message}`)
+  return data.signedUrl
+}
+
+/**
+ * Elimina un documento del bucket vault
+ */
+export async function deleteVaultDocument(storagePath: string): Promise<void> {
+  try {
+    const { error } = await supabaseAdmin.storage.from(VAULT_BUCKET).remove([storagePath])
+    if (error) console.error('[Vault Storage] Error eliminando:', error.message)
+  } catch (err) {
+    console.error('[Vault Storage] Error inesperado:', err)
+  }
+}
